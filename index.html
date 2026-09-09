@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS // Cyber Operations</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --green: #00ff88;
+    --green2: #00c96b;
+    --cyan: #00eaff;
+    --red: #ff304f;
+    --yellow: #ffd000;
+    --bg: #020605;
+    --panel: rgba(4, 15, 12, .94);
+    --border: rgba(0,255,136,.18);
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--green);
+    font-family: "Courier New", monospace;
+}
+
+/* MATRIX CANVAS */
+
+#matrix {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: .13;
+    pointer-events: none;
+}
+
+/* SCANLINES */
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,.015) 0px,
+            rgba(255,255,255,.015) 1px,
+            transparent 2px,
+            transparent 5px
+        );
+}
+
+/* APP */
+
+.app {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    grid-template-rows: 65px 1fr;
+}
+
+/* HEADER */
+
+.header {
+    grid-column: 1 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 8, 6, .94);
+    box-shadow: 0 0 25px rgba(0,255,136,.05);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 35px;
+    height: 35px;
+    border: 1px solid var(--green);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 0 15px rgba(0,255,136,.35);
+    font-weight: bold;
+}
+
+.logo h1 {
+    font-size: 17px;
+    letter-spacing: 3px;
+}
+
+.logo small {
+    color: #538a72;
+    display: block;
+    font-size: 9px;
+    margin-top: 3px;
+}
+
+.header-right {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.simulation {
+    color: var(--yellow);
+    border: 1px solid rgba(255,208,0,.35);
+    padding: 7px 12px;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.clock {
+    font-size: 12px;
+    color: #8eb8a7;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    border-right: 1px solid var(--border);
+    background: rgba(1,9,7,.92);
+    padding: 20px 12px;
+}
+
+.section-title {
+    color: #467565;
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin: 8px 10px 12px;
+}
+
+.nav-item {
+    padding: 13px 12px;
+    margin-bottom: 5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: #6da58e;
+    font-size: 12px;
+    transition: .2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    color: var(--green);
+    background: rgba(0,255,136,.06);
+    border-color: var(--border);
+    box-shadow: inset 3px 0 var(--green);
+}
+
+.nav-item span {
+    margin-right: 9px;
+}
+
+.agent {
+    margin-top: 25px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    background: rgba(0,255,136,.025);
+}
+
+.agent-title {
+    font-size: 9px;
+    color: #507d6c;
+}
+
+.agent-name {
+    margin-top: 7px;
+    font-size: 12px;
+}
+
+.online {
+    margin-top: 9px;
+    font-size: 9px;
+    color: var(--green);
+}
+
+.online::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    display: inline-block;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    margin-right: 6px;
+}
+
+/* MAIN */
+
+.main {
+    padding: 17px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #123d2e transparent;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 12px;
+}
+
+/* PANELS */
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px rgba(0,255,136,.025);
+}
+
+.panel-title {
+    height: 36px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 13px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: #8ac5ae;
+}
+
+.panel-title .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 7px var(--green);
+}
+
+/* TARGET */
+
+.target-panel {
+    grid-column: 1 / 3;
+}
+
+.target-content {
+    padding: 18px;
+}
+
+.target-input {
+    display: flex;
+    gap: 8px;
+}
+
+.target-input input {
+    flex: 1;
+    background: #010806;
+    border: 1px solid #174535;
+    color: var(--green);
+    padding: 12px;
+    outline: none;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.target-input input:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 10px rgba(0,255,136,.12);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.run-btn {
+    background: rgba(0,255,136,.08);
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 0 18px;
+    transition: .2s;
+}
+
+.run-btn:hover {
+    background: var(--green);
+    color: #00150b;
+    box-shadow: 0 0 18px rgba(0,255,136,.4);
+}
+
+.target-info {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.info-box {
+    border: 1px solid #123a2d;
+    padding: 10px;
+    background: rgba(0,255,136,.02);
+}
+
+.info-box small {
+    color: #4e7969;
+    display: block;
+    font-size: 8px;
+}
+
+.info-box strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+}
+
+/* THREAT */
+
+.threat-panel {
+    grid-column: 3;
+}
+
+.threat {
+    padding: 18px;
+    text-align: center;
+}
+
+.threat-circle {
+    width: 110px;
+    height: 110px;
+    border: 5px solid #0b5037;
+    border-top-color: var(--green);
+    border-right-color: var(--green);
+    border-radius: 50%;
+    margin: auto;
+    display: grid;
+    place-items: center;
+    position: relative;
+    animation: spinSlow 8s linear infinite;
+}
+
+.threat-number {
+    font-size: 27px;
+    animation: counterSpin 8s linear infinite;
+}
+
+.threat-number small {
+    display: block;
+    font-size: 8px;
+    color: #518a74;
+}
+
+@keyframes spinSlow {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes counterSpin {
+    to { transform: rotate(-360deg); }
+}
+
+.threat-label {
+    margin-top: 13px;
+    font-size: 10px;
+    color: var(--green);
+}
+
+/* TERMINAL */
+
+.terminal-panel {
+    grid-column: 1 / 3;
+    height: 350px;
+}
+
+.terminal {
+    height: calc(100% - 36px);
+    padding: 13px;
+    overflow-y: auto;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(0,255,136,.035), transparent 45%),
+        #010504;
+}
+
+.terminal::-webkit-scrollbar {
+    width: 5px;
+}
+
+.terminal::-webkit-scrollbar-thumb {
+    background: #17533d;
+}
+
+.line {
+    margin-bottom: 7px;
+    line-height: 1.4;
+    font-size: 12px;
+    word-break: break-word;
+}
+
+.prompt {
+    color: var(--cyan);
+}
+
+.success {
+    color: var(--green);
+}
+
+.warning {
+    color: var(--yellow);
+}
+
+.danger {
+    color: var(--red);
+}
+
+.dim {
+    color: #4c7465;
+}
+
+.cmd-line {
+    display: flex;
+    gap: 7px;
+    margin-top: 8px;
+}
+
+.cmd-line span {
+    color: var(--cyan);
+}
+
+.cmd-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--green);
+    font-family: inherit;
+    font-size: 12px;
+    caret-color: var(--green);
+}
+
+/* PORTS */
+
+.ports-panel {
+    grid-column: 3;
+    height: 350px;
+}
+
+.port-list {
+    padding: 12px;
+    max-height: 310px;
+    overflow: auto;
+}
+
+.port {
+    display: grid;
+    grid-template-columns: 55px 1fr 65px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 5px;
+    border-bottom: 1px solid rgba(0,255,136,.07);
+    font-size: 10px;
+}
+
+.port-number {
+    color: var(--cyan);
+}
+
+.port-service {
+    color: #729887;
+}
+
+.open {
+    color: var(--green);
+}
+
+.closed {
+    color: #555;
+}
+
+.port-bar {
+    height: 3px;
+    background: #0a241a;
+}
+
+.port-bar div {
+    height: 100%;
+    background: var(--green);
+    width: 80%;
+    box-shadow: 0 0 5px var(--green);
+}
+
+/* LOGS */
+
+.logs-panel {
+    grid-column: 1;
+    min-height: 230px;
+}
+
+.logs {
+    padding: 10px;
+    height: 190px;
+    overflow: auto;
+}
+
+.log {
+    padding: 7px 2px;
+    border-bottom: 1px solid rgba(0,255,136,.05);
+    font-size: 9px;
+    color: #638b7a;
+}
+
+.log b {
+    color: #328b68;
+    margin-right: 7px;
+}
+
+/* DATABASE */
+
+.database-panel {
+    grid-column: 2;
+    min-height: 230px;
+}
+
+.database {
+    padding: 12px;
+}
+
+.db-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 3px;
+    border-bottom: 1px solid rgba(0,255,136,.06);
+    font-size: 9px;
+}
+
+.db-row span:last-child {
+    color: var(--green);
+}
+
+/* FIREWALL */
+
+.firewall-panel {
+    grid-column: 3;
+    min-height: 230px;
+}
+
+.firewall {
+    padding: 14px;
+}
+
+.fire-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 2px;
+    font-size: 9px;
+}
+
+.switch {
+    width: 32px;
+    height: 14px;
+    background: #0c2d20;
+    border-radius: 20px;
+    position: relative;
+}
+
+.switch::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    top: 2px;
+    right: 2px;
+    box-shadow: 0 0 6px var(--green);
+}
+
+/* PROGRESS */
+
+.progress-wrap {
+    margin-top: 13px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8px;
+    color: #557e6c;
+}
+
+.progress {
+    height: 5px;
+    background: #0a241a;
+    margin-top: 5px;
+}
+
+.progress div {
+    width: 76%;
+    height: 100%;
+    background: var(--green);
+    box-shadow: 0 0 7px rgba(0,255,136,.5);
+    transition: width .4s;
+}
+
+/* MODAL */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    place-items: center;
+    background: rgba(0,0,0,.82);
+    backdrop-filter: blur(5px);
+}
+
+.modal.show {
+    display: grid;
+}
+
+.access-box {
+    width: min(560px,90%);
+    border: 1px solid var(--green);
+    background: #010806;
+    padding: 35px;
+    text-align: center;
+    box-shadow:
+        0 0 30px rgba(0,255,136,.15),
+        inset 0 0 30px rgba(0,255,136,.03);
+}
+
+.access-icon {
+    font-size: 45px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px var(--green);
+}
+
+.access-box h2 {
+    letter-spacing: 5px;
+    font-size: 23px;
+    margin-bottom: 10px;
+}
+
+.access-box p {
+    color: #57806f;
+    font-size: 10px;
+    line-height: 1.8;
+}
+
+.close-btn {
+    margin-top: 20px;
+    border: 1px solid var(--green);
+    color: var(--green);
+    background: transparent;
+    padding: 10px 25px;
+}
+
+/* MOBILE */
+
+@media(max-width:900px) {
+    body {
+        overflow: auto;
+    }
+
+    .app {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+        grid-template-rows: 60px auto 1fr;
+    }
+
+    .header {
+        grid-column: 1;
+    }
+
+    .sidebar {
+        grid-row: 2;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        overflow-x: auto;
+        padding: 8px;
+    }
+
+    .section-title,
+    .agent {
+        display: none;
+    }
+
+    .nav-item {
+        white-space: nowrap;
+        margin: 0 3px;
+    }
+
+    .main {
+        grid-row: 3;
+    }
+
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .target-panel,
+    .threat-panel,
+    .terminal-panel,
+    .ports-panel,
+    .logs-panel,
+    .database-panel,
+    .firewall-panel {
+        grid-column: 1;
+    }
+
+    .target-info {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .simulation {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="app">
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <div class="logo">
+
+            <div class="logo-icon">
+                N
+            </div>
+
+            <div>
+                <h1>NEXUS // CYBER OPS</h1>
+                <small>ADVANCED SECURITY SIMULATION</small>
+            </div>
+
+        </div>
+
+        <div class="header-right">
+
+            <div class="simulation">
+                ⚠ SIMULATION MODE
+            </div>
+
+            <div class="clock" id="clock">
+                00:00:00
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="section-title">
+            OPERATIONS
+        </div>
+
+        <div class="nav-item active" onclick="fakeCommand('status')">
+            <span>◈</span> Command Center
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('scan')">
+            <span>⌁</span> Network Scanner
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('ports')">
+            <span>◉</span> Port Analysis
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('firewall')">
+            <span>◆</span> Firewall
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('database')">
+            <span>▣</span> Database
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('logs')">
+            <span>≡</span> System Logs
+        </div>
+
+        <div class="section-title">
+            SYSTEM
+        </div>
+
+        <div class="nav-item" onclick="showAccess()">
+            <span>⚿</span> Access Console
+        </div>
+
+        <div class="nav-item" onclick="fakeCommand('help')">
+            <span>?</span> Command Help
+        </div>
+
+        <div class="agent">
+
+            <div class="agent-title">
+                ACTIVE OPERATOR
+            </div>
+
+            <div class="agent-name">
+                root@NEXUS
+            </div>
+
+            <div class="online">
+                SYSTEM ONLINE
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <div class="dashboard">
+
+
+            <!-- TARGET -->
+
+            <section class="panel target-panel">
+
+                <div class="panel-title">
+                    TARGET CONTROL
+                    <span class="dot"></span>
+                </div>
+
+                <div class="target-content">
+
+                    <div class="target-input">
+
+                        <input
+                            id="target"
+                            value="192.0.2.47"
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+
+                        <button
+                            class="run-btn"
+                            onclick="runScan()"
+                        >
+                            EXECUTE
+                        </button>
+
+                    </div>
+
+                    <div class="target-info">
+
+                        <div class="info-box">
+                            <small>TARGET</small>
+                            <strong id="targetDisplay">
+                                192.0.2.47
+                            </strong>
+                        </div>
+
+                        <div class="info-box">
+                            <small>LATENCY</small>
+                            <strong id="latency">
+                                24 ms
+                            </strong>
+                        </div>
+
+                        <div class="info-box">
+                            <small>STATUS</small>
+                            <strong id="targetStatus">
+                                ONLINE
+                            </strong>
+                        </div>
+
+                        <div class="info-box">
+                            <small>RISK</small>
+                            <strong id="risk">
+                                LOW
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- THREAT -->
+
+            <section class="panel threat-panel">
+
+                <div class="panel-title">
+                    THREAT LEVEL
+                    <span class="dot"></span>
+                </div>
+
+                <div class="threat">
+
+                    <div class="threat-circle">
+
+                        <div class="threat-number">
+                            <span id="threatValue">17</span>%
+                            <small>RISK</small>
+                        </div>
+
+                    </div>
+
+                    <div class="threat-label" id="threatLabel">
+                        LOW THREAT
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- TERMINAL -->
+
+            <section class="panel terminal-panel">
+
+                <div class="panel-title">
+
+                    NEXUS TERMINAL
+
+                    <span>
+                        SESSION: <b id="session">A7F9C2</b>
+                    </span>
+
+                </div>
+
+                <div
+                    class="terminal"
+                    id="terminal"
+                    onclick="focusCommand()"
+                >
+
+                    <div class="line success">
+                        [NEXUS] Secure simulation environment initialized.
+                    </div>
+
+                    <div class="line dim">
+                        [SYSTEM] Loading virtual security modules...
+                    </div>
+
+                    <div class="line success">
+                        [OK] Firewall module loaded
+                    </div>
+
+                    <div class="line success">
+                        [OK] Packet analyzer loaded
+                    </div>
+
+                    <div class="line success">
+                        [OK] Virtual database loaded
+                    </div>
+
+                    <div class="line warning">
+                        [!] This environment is a local simulation.
+                    </div>
+
+                    <div class="line">
+                        Type <span class="prompt">help</span> to list commands.
+                    </div>
+
+                    <div id="terminalOutput"></div>
+
+                    <div class="cmd-line">
+
+                        <span>root@nexus:~$</span>
+
+                        <input
+                            id="command"
+                            class="cmd-input"
+                            autocomplete="off"
+                            spellcheck="false"
+                            autofocus
+                        >
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- PORTS -->
+
+            <section class="panel ports-panel">
+
+                <div class="panel-title">
+                    PORT ANALYSIS
+                    <span class="dot"></span>
+                </div>
+
+                <div class="port-list" id="ports">
+
+                    <div class="port">
+                        <span class="port-number">22</span>
+                        <span class="port-service">SSH</span>
+                        <span class="open">OPEN</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">53</span>
+                        <span class="port-service">DNS</span>
+                        <span class="open">OPEN</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">80</span>
+                        <span class="port-service">HTTP</span>
+                        <span class="open">OPEN</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">443</span>
+                        <span class="port-service">HTTPS</span>
+                        <span class="open">OPEN</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">3306</span>
+                        <span class="port-service">MYSQL</span>
+                        <span class="closed">FILTERED</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">8080</span>
+                        <span class="port-service">HTTP-ALT</span>
+                        <span class="open">OPEN</span>
+                    </div>
+
+                    <div class="port">
+                        <span class="port-number">8443</span>
+                        <span class="port-service">HTTPS-ALT</span>
+                        <span class="closed">FILTERED</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- LOGS -->
+
+            <section class="panel logs-panel">
+
+                <div class="panel-title">
+                    LIVE SYSTEM LOGS
+                    <span class="dot"></span>
+                </div>
+
+                <div class="logs" id="logs"></div>
+
+            </section>
+
+
+            <!-- DATABASE -->
+
+            <section class="panel database-panel">
+
+                <div class="panel-title">
+                    VIRTUAL DATABASE
+                    <span class="dot"></span>
+                </div>
+
+                <div class="database">
+
+                    <div class="db-row">
+                        <span>users.db</span>
+                        <span>ONLINE</span>
+                    </div>
+
+                    <div class="db-row">
+                        <span>system.db</span>
+                        <span>ONLINE</span>
+                    </div>
+
+                    <div class="db-row">
+                        <span>auth.db</span>
+                        <span>LOCKED</span>
+                    </div>
+
+                    <div class="db-row">
+                        <span>logs.db</span>
+                        <span>ONLINE</span>
+                    </div>
+
+                    <div class="db-row">
+                        <span>backup.db</span>
+                        <span>ENCRYPTED</span>
+                    </div>
+
+                    <div class="progress-wrap">
+
+                        <div class="progress-label">
+                            <span>STORAGE</span>
+                            <span id="storageValue">76%</span>
+                        </div>
+
+                        <div class="progress">
+                            <div id="storageBar"></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- FIREWALL -->
+
+            <section class="panel firewall-panel">
+
+                <div class="panel-title">
+                    FIREWALL
+                    <span class="dot"></span>
+                </div>
+
+                <div class="firewall">
+
+                    <div class="fire-row">
+                        <span>INBOUND FILTER</span>
+                        <div class="switch"></div>
+                    </div>
+
+                    <div class="fire-row">
+                        <span>OUTBOUND FILTER</span>
+                        <div class="switch"></div>
+                    </div>
+
+                    <div class="fire-row">
+                        <span>PACKET INSPECTION</span>
+                        <div class="switch"></div>
+                    </div>
+
+                    <div class="fire-row">
+                        <span>THREAT DETECTION</span>
+                        <div class="switch"></div>
+                    </div>
+
+                    <div class="fire-row">
+                        <span>RATE LIMIT</span>
+                        <div class="switch"></div>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- ACCESS MODAL -->
+
+<div class="modal" id="modal">
+
+    <div class="access-box">
+
+        <div class="access-icon">
+            ⚿
+        </div>
+
+        <h2 id="accessTitle">
+            ACCESS GRANTED
+        </h2>
+
+        <p id="accessText">
+            Virtual authorization sequence completed.
+            <br>
+            No real system was accessed.
+        </p>
+
+        <button
+            class="close-btn"
+            onclick="closeAccess()"
+        >
+            CLOSE CONSOLE
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==========================================
+   MATRIX EFFECT
+========================================== */
+
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+let width;
+let height;
+let columns;
+let drops;
+
+function resizeMatrix() {
+
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+
+    columns = Math.floor(width / 16);
+
+    drops = [];
+
+    for(let i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -100;
+    }
+}
+
+resizeMatrix();
+
+window.addEventListener("resize", resizeMatrix);
+
+const chars =
+"01アイウエオカキクケコサシスセソタチツテトABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";
+
+function drawMatrix() {
+
+    ctx.fillStyle = "rgba(0,0,0,.055)";
+    ctx.fillRect(0,0,width,height);
+
+    ctx.font = "14px monospace";
+
+    for(let i = 0; i < drops.length; i++) {
+
+        const char =
+            chars[Math.floor(Math.random() * chars.length)];
+
+        ctx.fillStyle =
+            Math.random() > .94
+                ? "#d7fff0"
+                : "#00ff88";
+
+        ctx.fillText(
+            char,
+            i * 16,
+            drops[i] * 16
+        );
+
+        if(
+            drops[i] * 16 > height &&
+            Math.random() > .975
+        ) {
+            drops[i] = 0;
+        }
+
+        drops[i] += .7;
+    }
+}
+
+setInterval(drawMatrix, 45);
+
+
+/* ==========================================
+   CLOCK
+========================================== */
+
+function updateClock() {
+
+    const now = new Date();
+
+    const h = String(now.getHours()).padStart(2,"0");
+    const m = String(now.getMinutes()).padStart(2,"0");
+    const s = String(now.getSeconds()).padStart(2,"0");
+
+    document.getElementById("clock").textContent =
+        `${h}:${m}:${s}`;
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* ==========================================
+   SESSION
+========================================== */
+
+function randomHex(length = 6) {
+
+    const chars = "ABCDEF0123456789";
+    let result = "";
+
+    for(let i = 0; i < length; i++) {
+
+        result +=
+            chars[Math.floor(Math.random() * chars.length)];
+
+    }
+
+    return result;
+}
+
+document.getElementById("session").textContent =
+    randomHex();
+
+
+/* ==========================================
+   TERMINAL
+========================================== */
+
+const commandInput =
+    document.getElementById("command");
+
+const terminal =
+    document.getElementById("terminal");
+
+const output =
+    document.getElementById("terminalOutput");
+
+
+function focusCommand() {
+    commandInput.focus();
+}
+
+
+commandInput.addEventListener("keydown", function(e) {
+
+    if(e.key !== "Enter") return;
+
+    const command =
+        commandInput.value.trim().toLowerCase();
+
+    if(!command) return;
+
+    addTerminalLine(
+        `root@nexus:~$ ${command}`,
+        "prompt"
+    );
+
+    commandInput.value = "";
+
+    processCommand(command);
+
+});
+
+
+function addTerminalLine(text, className = "") {
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        `line ${className}`;
+
+    div.innerHTML = text;
+
+    output.appendChild(div);
+
+    terminal.scrollTop =
+        terminal.scrollHeight;
+}
+
+
+/* ==========================================
+   COMMAND PROCESSOR
+========================================== */
+
+function processCommand(command) {
+
+    switch(command) {
+
+        case "help":
+            showHelp();
+            break;
+
+        case "clear":
+            output.innerHTML = "";
+            break;
+
+        case "status":
+            showStatus();
+            break;
+
+        case "scan":
+            runScan();
+            break;
+
+        case "ports":
+            showPorts();
+            break;
+
+        case "firewall":
+            showFirewall();
+            break;
+
+        case "database":
+            showDatabase();
+            break;
+
+        case "logs":
+            showLogs();
+            break;
+
+        case "whoami":
+            addTerminalLine(
+                "operator: root",
+                "success"
+            );
+
+            addTerminalLine(
+                "clearance: LEVEL-09",
+                "success"
+            );
+
+            addTerminalLine(
+                "environment: LOCAL-SIMULATION",
+                "warning"
+            );
+
+            break;
+
+        case "access":
+            showAccess();
+            break;
+
+        case "decrypt":
+            fakeDecrypt();
+            break;
+
+        case "trace":
+            fakeTrace();
+            break;
+
+        default:
+
+            addTerminalLine(
+                `command not found: ${command}`,
+                "danger"
+            );
+
+            addTerminalLine(
+                `Type "help" for available commands.`,
+                "dim"
+            );
+    }
+}
+
+
+/* ==========================================
+   HELP
+========================================== */
+
+function showHelp() {
+
+    const commands = [
+
+        ["help", "Komut listesini gösterir"],
+        ["status", "Sistem durumunu gösterir"],
+        ["scan", "Sanal hedef taraması başlatır"],
+        ["ports", "Sanal port sonuçlarını gösterir"],
+        ["firewall", "Firewall durumunu gösterir"],
+        ["database", "Sanal veritabanlarını gösterir"],
+        ["logs", "Sistem loglarını gösterir"],
+        ["whoami", "Operatör bilgisi"],
+        ["trace", "Sanal rota simülasyonu"],
+        ["decrypt", "Sahte şifre çözme animasyonu"],
+        ["access", "Sanal erişim ekranı"],
+        ["clear", "Terminali temizler"]
+
+    ];
+
+    addTerminalLine(
+        "AVAILABLE COMMANDS",
+        "success"
+    );
+
+    commands.forEach(c => {
+
+        addTerminalLine(
+            `<span class="prompt">${c[0].padEnd(12," ")}</span> ${c[1]}`,
+            "dim"
+        );
+
+    });
+}
+
+
+/* ==========================================
+   STATUS
+========================================== */
+
+function showStatus() {
+
+    addTerminalLine(
+        "──────── SYSTEM STATUS ────────",
+        "success"
+    );
+
+    addTerminalLine(
+        "Kernel ............ NEXUS-K9",
+        "dim"
+    );
+
+    addTerminalLine(
+        "CPU ............... 34%",
+        "dim"
+    );
+
+    addTerminalLine(
+        "Memory ............ 61%",
+        "dim"
+    );
+
+    addTerminalLine(
+        "Firewall .......... ACTIVE",
+        "success"
+    );
+
+    addTerminalLine(
+        "Threat engine ..... ACTIVE",
+        "success"
+    );
+
+    addTerminalLine(
+        "Network ........... SIMULATED",
+        "warning"
+    );
+
+    addTerminalLine(
+        "External access ... DISABLED",
+        "warning"
+    );
+}
+
+
+/* ==========================================
+   FAKE SCAN
+========================================== */
+
+function runScan() {
+
+    const target =
+        document.getElementById("target").value.trim();
+
+    document.getElementById("targetDisplay")
+        .textContent =
+        target || "192.0.2.47";
+
+    addTerminalLine(
+        `[SCAN] Initializing virtual scan against ${target || "192.0.2.47"}...`,
+        "success"
+    );
+
+    document.getElementById("targetStatus")
+        .textContent = "SCANNING";
+
+    let progress = 0;
+
+    const interval =
+        setInterval(() => {
+
+            progress += Math.floor(Math.random() * 16) + 7;
+
+            if(progress > 100)
+                progress = 100;
+
+            addTerminalLine(
+                `[SCAN] Analyzing virtual packet layer... ${progress}%`,
+                "dim"
+            );
+
+            if(progress >= 100) {
+
+                clearInterval(interval);
+
+                finishScan();
+
+            }
+
+        }, 350);
+}
+
+
+function finishScan() {
+
+    const risk =
+        Math.floor(Math.random() * 30) + 8;
+
+    const latency =
+        Math.floor(Math.random() * 40) + 10;
+
+    document.getElementById("latency")
+        .textContent =
+        latency + " ms";
+
+    document.getElementById("targetStatus")
+        .textContent =
+        "ONLINE";
+
+    document.getElementById("risk")
+        .textContent =
+        risk < 25 ? "LOW" : "MEDIUM";
+
+    document.getElementById("threatValue")
+        .textContent =
+        risk;
+
+    document.getElementById("threatLabel")
+        .textContent =
+        risk < 25
+            ? "LOW THREAT"
+            : "ELEVATED THREAT";
+
+    addTerminalLine(
+        "[OK] Virtual scan completed.",
+        "success"
+    );
+
+    addTerminalLine(
+        `[RESULT] Risk assessment: ${risk}%`,
+        risk < 25 ? "success" : "warning"
+    );
+
+    addTerminalLine(
+        "[RESULT] No real network traffic generated.",
+        "warning"
+    );
+
+    addLog("Virtual network scan completed");
+
+}
+
+
+/* ==========================================
+   PORTS
+========================================== */
+
+function showPorts() {
+
+    addTerminalLine(
+        "──────── VIRTUAL PORT TABLE ────────",
+        "success"
+    );
+
+    const ports = [
+        "22 / SSH / OPEN",
+        "53 / DNS / OPEN",
+        "80 / HTTP / OPEN",
+        "443 / HTTPS / OPEN",
+        "3306 / MYSQL / FILTERED",
+        "8080 / HTTP-ALT / OPEN",
+        "8443 / HTTPS-ALT / FILTERED"
+    ];
+
+    ports.forEach(port => {
+
+        addTerminalLine(
+            port,
+            "dim"
+        );
+
+    });
+
+    addLog("Port analysis module queried");
+}
+
+
+/* ==========================================
+   FIREWALL
+========================================== */
+
+function showFirewall() {
+
+    addTerminalLine(
+        "──────── FIREWALL ────────",
+        "success"
+    );
+
+    addTerminalLine(
+        "Inbound filtering ..... ENABLED",
+        "success"
+    );
+
+    addTerminalLine(
+        "Outbound filtering .... ENABLED",
+        "success"
+    );
+
+    addTerminalLine(
+        "Packet inspection ..... ENABLED",
+        "success"
+    );
+
+    addTerminalLine(
+        "Threat detection ...... ENABLED",
+        "success"
+    );
+
+    addTerminalLine(
+        "Environment ........... SIMULATION",
+        "warning"
+    );
+}
+
+
+/* ==========================================
+   DATABASE
+========================================== */
+
+function showDatabase() {
+
+    addTerminalLine(
+        "──────── VIRTUAL DATABASE ────────",
+        "success"
+    );
+
+    addTerminalLine(
+        "users.db ........ ONLINE",
+        "success"
+    );
+
+    addTerminalLine(
+        "system.db ....... ONLINE",
+        "success"
+    );
+
+    addTerminalLine(
+        "auth.db ......... LOCKED",
+        "warning"
+    );
+
+    addTerminalLine(
+        "logs.db ......... ONLINE",
+        "success"
+    );
+
+    addTerminalLine(
+        "backup.db ....... ENCRYPTED",
+        "warning"
+    );
+}
+
+
+/* ==========================================
+   LOGS
+========================================== */
+
+const logMessages = [
+    "Packet inspection completed",
+    "Firewall rule evaluated",
+    "Authentication service heartbeat",
+    "Virtual database synchronized",
+    "Threat engine heartbeat",
+    "Session token refreshed",
+    "Security module active",
+    "Virtual network interface ready"
+];
+
+
+function addLog(message) {
+
+    const logs =
+        document.getElementById("logs");
+
+    const div =
+        document.createElement("div");
+
+    const now =
+        new Date().toLocaleTimeString();
+
+    div.className = "log";
+
+    div.innerHTML =
+        `<b>${now}</b> ${message}`;
+
+    logs.prepend(div);
+
+    while(logs.children.length > 20) {
+        logs.removeChild(logs.lastChild);
+    }
+}
+
+
+function showLogs() {
+
+    addTerminalLine(
+        "──────── LIVE LOGS ────────",
+        "success"
+    );
+
+    for(let i = 0; i < 5; i++) {
+
+        addTerminalLine(
+            `[LOG] ${logMessages[
+                Math.floor(Math.random() * logMessages.length)
+            ]}`,
+            "dim"
+        );
+
+    }
+}
+
+
+setInterval(() => {
+
+    addLog(
+        logMessages[
+            Math.floor(Math.random() * logMessages.length)
+        ]
+    );
+
+}, 2500);
+
+
+/* ==========================================
+   FAKE TRACE
+========================================== */
+
+function fakeTrace() {
+
+    const hops = [
+        "10.24.0.1",
+        "172.16.4.1",
+        "192.168.20.1",
+        "198.51.100.7",
+        "203.0.113.19"
+    ];
+
+    addTerminalLine(
+        "[TRACE] Starting virtual route simulation...",
+        "success"
+    );
+
+    hops.forEach((ip, index) => {
+
+        setTimeout(() => {
+
+            const ms =
+                Math.floor(Math.random() * 60) + 10;
+
+            addTerminalLine(
+                `${index + 1}    ${ip}    ${ms} ms`,
+                "dim"
+            );
+
+        }, index * 450);
+
+    });
+
+}
+
+
+/* ==========================================
+   FAKE DECRYPT
+========================================== */
+
+function fakeDecrypt() {
+
+    addTerminalLine(
+        "[CRYPTO] Starting simulated decryption sequence...",
+        "warning"
+    );
+
+    let percent = 0;
+
+    const timer =
+        setInterval(() => {
+
+            percent += Math.floor(Math.random() * 13) + 4;
+
+            if(percent > 100)
+                percent = 100;
+
+            const blocks =
+                Math.floor(percent / 5);
+
+            const bar =
+                "█".repeat(blocks) +
+                "░".repeat(20 - blocks);
+
+            addTerminalLine(
+                `[CRYPTO] [${bar}] ${percent}%`,
+                "dim"
+            );
+
+            if(percent >= 100) {
+
+                clearInterval(timer);
+
+                addTerminalLine(
+                    "[CRYPTO] Simulation completed.",
+                    "success"
+                );
+
+                addTerminalLine(
+                    "[CRYPTO] Result: VIRTUAL_KEY_7F3A",
+                    "success"
+                );
+
+            }
+
+        }, 250);
+}
+
+
+/* ==========================================
+   ACCESS
+========================================== */
+
+function showAccess() {
+
+    const modal =
+        document.getElementById("modal");
+
+    modal.classList.add("show");
+
+    addTerminalLine(
+        "[ACCESS] Virtual authorization sequence executed.",
+        "success"
+    );
+
+    addLog("Virtual access console opened");
+}
+
+
+function closeAccess() {
+
+    document.getElementById("modal")
+        .classList.remove("show");
+
+}
+
+
+/* ==========================================
+   RANDOM SYSTEM ACTIVITY
+========================================== */
+
+setInterval(() => {
+
+    const latency =
+        Math.floor(Math.random() * 50) + 10;
+
+    document.getElementById("latency")
+        .textContent =
+        latency + " ms";
+
+}, 3000);
+
+
+/* ==========================================
+   STARTUP
+========================================== */
+
+window.addEventListener("load", () => {
+
+    addLog("NEXUS kernel initialized");
+    addLog("Virtual security environment online");
+    addLog("External network access disabled");
+    addLog("Simulation modules loaded");
+
+    commandInput.focus();
+
+});
+
+</script>
+
+</body>
+</html>
